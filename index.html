@@ -1,1 +1,870 @@
-<h1> Hello Guys </h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CI/CD Pipeline Dashboard</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background: #080b12;
+      color: #f4f7fb;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1250px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      font-size: 22px;
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .brand h1 {
+      font-size: 22px;
+    }
+
+    .brand p {
+      color: #8992a5;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .run-btn {
+      border: none;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(99, 102, 241, .25);
+      transition: .2s;
+    }
+
+    .run-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(99, 102, 241, .4);
+    }
+
+    /* Pipeline info */
+    .pipeline-info {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      background: #0e131d;
+      border: 1px solid #1c2432;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 25px;
+    }
+
+    .info-left {
+      display: flex;
+      gap: 35px;
+      flex-wrap: wrap;
+    }
+
+    .info-item span {
+      display: block;
+      color: #737d91;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 5px;
+    }
+
+    .info-item strong {
+      font-size: 14px;
+    }
+
+    .status {
+      color: #22c55e !important;
+      display: flex !important;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    /* Pipeline */
+    .pipeline-card {
+      background: #0e131d;
+      border: 1px solid #1c2432;
+      border-radius: 18px;
+      padding: 30px;
+      margin-bottom: 25px;
+      overflow: hidden;
+    }
+
+    .pipeline-title {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 35px;
+    }
+
+    .pipeline-title h2 {
+      font-size: 17px;
+    }
+
+    .pipeline-title span {
+      color: #737d91;
+      font-size: 13px;
+    }
+
+    .pipeline {
+      display: flex;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    /* Connecting line */
+    .pipeline-line {
+      position: absolute;
+      top: 35px;
+      left: 8%;
+      right: 8%;
+      height: 3px;
+      background: #202938;
+      z-index: 0;
+    }
+
+    .pipeline-progress {
+      position: absolute;
+      top: 35px;
+      left: 8%;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #22c55e);
+      z-index: 1;
+      transition: width .8s ease;
+      box-shadow: 0 0 12px rgba(99,102,241,.7);
+    }
+
+    .stage {
+      width: 25%;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stage-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      margin: 0 auto 15px;
+      background: #111827;
+      border: 2px solid #273143;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      transition: .4s;
+    }
+
+    .stage-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .stage-status {
+      font-size: 11px;
+      color: #687386;
+      margin-top: 6px;
+    }
+
+    .stage.completed .stage-icon {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, .1);
+      box-shadow: 0 0 25px rgba(34,197,94,.2);
+    }
+
+    .stage.completed .stage-status {
+      color: #22c55e;
+    }
+
+    .stage.running .stage-icon {
+      border-color: #6366f1;
+      background: rgba(99,102,241,.12);
+      box-shadow: 0 0 30px rgba(99,102,241,.3);
+      animation: pulse 1.2s infinite;
+    }
+
+    .stage.running .stage-status {
+      color: #818cf8;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(99,102,241,.2);
+      }
+      50% {
+        box-shadow: 0 0 35px rgba(99,102,241,.65);
+      }
+    }
+
+    /* Bottom grid */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 25px;
+    }
+
+    .card {
+      background: #0e131d;
+      border: 1px solid #1c2432;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 17px 20px;
+      border-bottom: 1px solid #1c2432;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h3 {
+      font-size: 14px;
+    }
+
+    .card-header span {
+      color: #657086;
+      font-size: 11px;
+    }
+
+    /* Logs */
+    .logs {
+      height: 280px;
+      overflow-y: auto;
+      padding: 18px;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.9;
+      color: #aab3c2;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 12px;
+    }
+
+    .log-time {
+      color: #4f5b70;
+    }
+
+    .success {
+      color: #22c55e;
+    }
+
+    .info {
+      color: #60a5fa;
+    }
+
+    .warning {
+      color: #f59e0b;
+    }
+
+    /* Deployment */
+    .deploy-content {
+      padding: 20px;
+    }
+
+    .environment {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #111722;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #1d2737;
+    }
+
+    .env-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .env-dot {
+      width: 9px;
+      height: 9px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .env-dot.pending {
+      background: #64748b;
+      box-shadow: none;
+    }
+
+    .env-status {
+      font-size: 11px;
+      color: #22c55e;
+    }
+
+    .pending-text {
+      color: #64748b;
+    }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .app {
+        padding: 18px;
+      }
+
+      .header {
+        gap: 15px;
+        align-items: flex-start;
+      }
+
+      .pipeline-info {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline-card {
+        padding: 20px 10px;
+      }
+
+      .stage-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+      }
+
+      .stage-name {
+        font-size: 12px;
+      }
+
+      .pipeline-line,
+      .pipeline-progress {
+        top: 27px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .brand p {
+        display: none;
+      }
+
+      .run-btn {
+        padding: 10px 13px;
+      }
+
+      .pipeline-title span {
+        display: none;
+      }
+
+      .info-left {
+        gap: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo">⚙️</div>
+        <div>
+          <h1>CI/CD Pipeline</h1>
+          <p>Continuous Integration & Continuous Deployment</p>
+        </div>
+      </div>
+
+      <button class="run-btn" onclick="runPipeline()">
+        ▶ Run Pipeline
+      </button>
+    </header>
+
+
+    <!-- Pipeline Information -->
+    <section class="pipeline-info">
+
+      <div class="info-left">
+
+        <div class="info-item">
+          <span>Repository</span>
+          <strong>my-awesome-app</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Branch</span>
+          <strong>main</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Commit</span>
+          <strong>a83f21c</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Author</span>
+          <strong>Alex Johnson</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Status</span>
+          <strong class="status" id="overallStatus">Ready</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Pipeline -->
+    <section class="pipeline-card">
+
+      <div class="pipeline-title">
+        <h2>Pipeline Stages</h2>
+        <span id="pipelineTime">Last run: Never</span>
+      </div>
+
+      <div class="pipeline">
+
+        <div class="pipeline-line"></div>
+        <div class="pipeline-progress" id="progress"></div>
+
+        <!-- Code -->
+        <div class="stage" id="stage0">
+
+          <div class="stage-icon">💻</div>
+
+          <div class="stage-name">
+            Code
+          </div>
+
+          <div class="stage-status">
+            Waiting
+          </div>
+
+        </div>
+
+
+        <!-- Build -->
+        <div class="stage" id="stage1">
+
+          <div class="stage-icon">🔨</div>
+
+          <div class="stage-name">
+            Build
+          </div>
+
+          <div class="stage-status">
+            Waiting
+          </div>
+
+        </div>
+
+
+        <!-- Test -->
+        <div class="stage" id="stage2">
+
+          <div class="stage-icon">🧪</div>
+
+          <div class="stage-name">
+            Test
+          </div>
+
+          <div class="stage-status">
+            Waiting
+          </div>
+
+        </div>
+
+
+        <!-- Deploy -->
+        <div class="stage" id="stage3">
+
+          <div class="stage-icon">🚀</div>
+
+          <div class="stage-name">
+            Deploy
+          </div>
+
+          <div class="stage-status">
+            Waiting
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Bottom Section -->
+    <div class="bottom-grid">
+
+      <!-- Logs -->
+      <section class="card">
+
+        <div class="card-header">
+          <h3>Pipeline Logs</h3>
+          <span>LIVE</span>
+        </div>
+
+        <div class="logs" id="logs">
+
+          <div class="log-line">
+            <span class="log-time">--:--:--</span>
+            <span>Waiting for pipeline execution...</span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- Deployment -->
+      <section class="card">
+
+        <div class="card-header">
+          <h3>Deployment Environments</h3>
+          <span>STATUS</span>
+        </div>
+
+        <div class="deploy-content">
+
+          <div class="environment">
+
+            <div class="env-name">
+              <span class="env-dot pending" id="devDot"></span>
+              Development
+            </div>
+
+            <span class="env-status pending-text" id="devStatus">
+              Waiting
+            </span>
+
+          </div>
+
+
+          <div class="environment">
+
+            <div class="env-name">
+              <span class="env-dot pending" id="stagingDot"></span>
+              Staging
+            </div>
+
+            <span class="env-status pending-text" id="stagingStatus">
+              Waiting
+            </span>
+
+          </div>
+
+
+          <div class="environment">
+
+            <div class="env-name">
+              <span class="env-dot pending" id="prodDot"></span>
+              Production
+            </div>
+
+            <span class="env-status pending-text" id="prodStatus">
+              Waiting
+            </span>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    const stages = [
+      {
+        name: "Code",
+        logs: [
+          "Checking out repository...",
+          "Fetching latest commit a83f21c...",
+          "Code checkout completed."
+        ]
+      },
+      {
+        name: "Build",
+        logs: [
+          "Installing dependencies...",
+          "Running build process...",
+          "Compiling application...",
+          "Build completed successfully."
+        ]
+      },
+      {
+        name: "Test",
+        logs: [
+          "Running unit tests...",
+          "Running integration tests...",
+          "124 tests passed.",
+          "Code coverage: 94%",
+          "All tests passed successfully."
+        ]
+      },
+      {
+        name: "Deploy",
+        logs: [
+          "Creating deployment package...",
+          "Deploying to development...",
+          "Deploying to staging...",
+          "Deploying to production...",
+          "Deployment completed successfully."
+        ]
+      }
+    ];
+
+    let running = false;
+
+    function getTime() {
+      return new Date().toLocaleTimeString([], {
+        hour12: false
+      });
+    }
+
+    function addLog(message, type = "") {
+
+      const logs = document.getElementById("logs");
+
+      const line = document.createElement("div");
+      line.className = "log-line";
+
+      line.innerHTML = `
+        <span class="log-time">${getTime()}</span>
+        <span class="${type}">${message}</span>
+      `;
+
+      logs.appendChild(line);
+
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+
+    function resetPipeline() {
+
+      for (let i = 0; i < 4; i++) {
+
+        const stage = document.getElementById(`stage${i}`);
+
+        stage.classList.remove("completed", "running");
+
+        stage.querySelector(".stage-status").textContent =
+          "Waiting";
+      }
+
+      document.getElementById("progress").style.width = "0%";
+
+      document.getElementById("logs").innerHTML = "";
+
+      document.getElementById("devDot").className =
+        "env-dot pending";
+
+      document.getElementById("stagingDot").className =
+        "env-dot pending";
+
+      document.getElementById("prodDot").className =
+        "env-dot pending";
+
+      document.getElementById("devStatus").textContent =
+        "Waiting";
+
+      document.getElementById("stagingStatus").textContent =
+        "Waiting";
+
+      document.getElementById("prodStatus").textContent =
+        "Waiting";
+
+      document.getElementById("overallStatus").textContent =
+        "Running";
+    }
+
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+
+    async function runStage(index) {
+
+      const stage = document.getElementById(`stage${index}`);
+
+      stage.classList.add("running");
+
+      stage.querySelector(".stage-status").textContent =
+        "Running...";
+
+      addLog(`▶ ${stages[index].name} stage started`, "info");
+
+      for (const log of stages[index].logs) {
+
+        await sleep(650);
+
+        addLog(log, "info");
+
+      }
+
+      await sleep(500);
+
+      stage.classList.remove("running");
+
+      stage.classList.add("completed");
+
+      stage.querySelector(".stage-status").textContent =
+        "Completed ✓";
+
+      addLog(
+        `✓ ${stages[index].name} stage completed`,
+        "success"
+      );
+
+      // Update pipeline progress
+      const progress = ((index + 1) / 4) * 84;
+
+      document.getElementById("progress").style.width =
+        `${progress}%`;
+
+
+      // Deployment status
+      if (index === 3) {
+
+        document.getElementById("devDot")
+          .classList.remove("pending");
+
+        document.getElementById("devStatus").textContent =
+          "Deployed";
+
+        document.getElementById("devStatus")
+          .classList.remove("pending-text");
+
+        await sleep(300);
+
+        document.getElementById("stagingDot")
+          .classList.remove("pending");
+
+        document.getElementById("stagingStatus").textContent =
+          "Deployed";
+
+        document.getElementById("stagingStatus")
+          .classList.remove("pending-text");
+
+        await sleep(300);
+
+        document.getElementById("prodDot")
+          .classList.remove("pending");
+
+        document.getElementById("prodStatus").textContent =
+          "Deployed";
+
+        document.getElementById("prodStatus")
+          .classList.remove("pending-text");
+      }
+    }
+
+
+    async function runPipeline() {
+
+      if (running) return;
+
+      running = true;
+
+      const button = document.querySelector(".run-btn");
+
+      button.disabled = true;
+
+      button.textContent = "⏳ Running...";
+
+      resetPipeline();
+
+      addLog("════════════════════════════════════", "info");
+      addLog("CI/CD pipeline execution started", "info");
+      addLog("Commit: a83f21c", "info");
+      addLog("Branch: main", "info");
+      addLog("════════════════════════════════════", "info");
+
+      for (let i = 0; i < stages.length; i++) {
+
+        await runStage(i);
+
+      }
+
+      document.getElementById("progress").style.width =
+        "84%";
+
+      document.getElementById("overallStatus").textContent =
+        "Success";
+
+      document.getElementById("overallStatus").style.color =
+        "#22c55e";
+
+      document.getElementById("pipelineTime").textContent =
+        "Last run: Just now";
+
+      addLog("════════════════════════════════════", "success");
+      addLog("✓ PIPELINE COMPLETED SUCCESSFULLY", "success");
+      addLog("Total duration: 8.4 seconds", "success");
+      addLog("════════════════════════════════════", "success");
+
+      button.disabled = false;
+
+      button.textContent = "↻ Run Again";
+
+      running = false;
+    }
+
+  </script>
+
+</body>
+</html>
